@@ -37,13 +37,38 @@ app.get('/filmes', async (req,res) => {
     }
 })
 
-app.get('/filmes/:id', (req,res) => {
-    const {id} = req.params
+app.get('/filmes/:id', async (req,res) => {
+    try{
+        const {id} = req.params
+        
+        if(id || isNaN(id)){
+            return res.status(400).json({
+                sucesso: false,
+                mensagem: 'ID filme inválido'
+            })
+        }
 
-    pool.query('SELECT * FROM filme WHERE id = ?', [id],(err, results) =>{
-        res.json(results)
-    })
+        const filme = await queryAsync('SELECT * FROM filme WHERE id = ?', [id])
+        if(filme.length === 0){
+            return res.status(404).json({
+                sucesso: false,
+                mensagem: 'Filme não encontrado'
+            })
+        }
+        res.json({
+            sucesso: true,
+            dados: filme[0]
+        })
+    } catch(erro){
+        console.error('Erro ao buscar filme:', erro)
+        res.status(500).json({
+            sucesso: false,
+            mensagem: 'Erro ao buscar filme',
+            erro: erro.message
+        })
+    }
 })
+
 
 module.exports = app
 
